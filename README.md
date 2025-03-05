@@ -2,9 +2,9 @@
 
 This project focuses on detecting Parkinson's disease from MRI scans using a deep learning ensemble model combining EfficientNet and Vision Transformer (ViT).
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
-### 1️⃣ Install Dependencies
+### Install Dependencies
 
 Ensure you have [Pixi](https://pixi.sh/) installed, then run:
 
@@ -12,7 +12,7 @@ Ensure you have [Pixi](https://pixi.sh/) installed, then run:
 pixi install
 ```
 
-### 2️⃣ Download Dataset
+### Download Dataset
 
 Run the following command to download the dataset from Kaggle:
 
@@ -28,17 +28,17 @@ Run the following command to download the dataset from Kaggle:
 .\dataset.ps1
 ```
 
-### 🧠 Model Architecture
+### Model Architecture
 
 - **EfficientNet B0**: Extracts spatial features from MRI scans.
 - **Vision Transformer (ViT)**: Captures global dependencies in the image.
 - **Fully Connected Layer**: Merges both feature maps and classifies the image.
 - **Softmax Activation**: Outputs final class probabilities.
 
-## 📊 Results & Evaluation
+## Results & Evaluation
 
 The model is evaluated using **categorical cross-entropy loss** and **accuracy metrics** on test data.
 
-## 📜 Citation
+## Citation
 
 Dataset: [Kaggle - Neurodegenerative Diseases](https://www.kaggle.com/datasets/toshall/neurodegenerative-diseases)
