@@ -16,19 +16,19 @@ pixi install
 
 Run the following command to download the dataset from Kaggle:
 
-**Linux/MacOS**
+#### Linux/MacOS
 
 ```bash
 ./download_dataset.sh
 ```
 
-**Windows**
+#### Windows
 
 ```powershell
 .\dataset.ps1
 ```
 
-### Model Architecture
+## Model Architecture
 
 - **EfficientNet B0**: Extracts spatial features from MRI scans.
 - **Vision Transformer (ViT)**: Captures global dependencies in the image.

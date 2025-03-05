@@ -61,9 +61,11 @@ if __name__ == "__main__":
     print(f"Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
 
     # Save processed dataset as .npz
-    save_dir = "../assets/processed_data"
+    save_dir = "./assets/preprocessed_data"
     os.makedirs(save_dir, exist_ok=True)
     np.savez_compressed(os.path.join(save_dir, "dataset.npz"),
                         X_train=X_train, X_val=X_val, X_test=X_test,
                         y_train=y_train, y_val=y_val, y_test=y_test)
+                       #class_names=np.array(class_names, dtype=object)
+                       #)
     print(f"Processed dataset saved in {save_dir}/dataset.npz!")
