@@ -19,6 +19,10 @@ from tensorflow.keras.utils import to_categorical
 def preprocess_image(image_path, target_size=(224, 224)):
     """Load an image, convert to RGB, resize, and normalize."""
     image = cv2.imread(image_path)  # Read image
+
+    if image is None:
+        raise FileNotFoundError(f"Error: Unable to load image at {image_path}")
+
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert to RGB
     image = cv2.resize(image, target_size)  # Resize to 224x224
     image = image.astype("float32") / 255.0  # Normalize to [0,1]
@@ -65,7 +69,6 @@ if __name__ == "__main__":
     os.makedirs(save_dir, exist_ok=True)
     np.savez_compressed(os.path.join(save_dir, "dataset.npz"),
                         X_train=X_train, X_val=X_val, X_test=X_test,
-                        y_train=y_train, y_val=y_val, y_test=y_test)
-                       #class_names=np.array(class_names, dtype=object)
-                       #)
+                        y_train=y_train, y_val=y_val, y_test=y_test,
+                       class_names=np.array(class_names, dtype=object))
     print(f"Processed dataset saved in {save_dir}/dataset.npz!")
