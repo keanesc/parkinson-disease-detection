@@ -12,13 +12,16 @@ __pycache__/
 *.pyo
 
 # Ignore dataset files (optional: you can download them separately)
-assets/*
+src/assets/*
 
 # But keep this .gitkeep file (useful for keeping empty folders in Git)
-!assets/.gitkeep
+!src/assets/.gitkeep
 
 # Ignore model weights and logs (optional)
 *.h5
+*.pth
+*.zip
+*.npz
 *.ckpt
 logs/
 
