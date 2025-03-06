@@ -2,6 +2,10 @@
 
 This project focuses on detecting Parkinson's disease from MRI scans using a deep learning ensemble model combining EfficientNet and Vision Transformer (ViT).
 
+## Important Notice
+
+This project has only been tested on **Linux**. If you wish to use it on **Windows**, you must run it using **WSL (Windows Subsystem for Linux)**.
+
 ## Setup & Installation
 
 ### Install Dependencies
@@ -16,16 +20,10 @@ pixi install
 
 Run the following command to download the dataset from Kaggle:
 
-#### Linux/MacOS
+#### Linux/MacOS/Windows WSL
 
 ```bash
-./download_dataset.sh
-```
-
-#### Windows
-
-```powershell
-.\dataset.ps1
+./scripts/download_dataset.sh
 ```
 
 ## Model Architecture
