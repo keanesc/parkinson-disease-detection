@@ -1,0 +1,29 @@
+
+# pixi environments
+.pixi
+*.egg-info
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore temporary Python files
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore dataset files (optional: you can download them separately)
+src/data/*
+src/models/*
+
+# But keep this .gitkeep file (useful for keeping empty folders in Git)
+!src/data/.gitkeep
+!src/models/.gitkeep
+
+# Ignore model weights and logs (optional)
+*.h5
+*.pth
+*.zip
+*.npz
+*.ckpt
+logs/
+
