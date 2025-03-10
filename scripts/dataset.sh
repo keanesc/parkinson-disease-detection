@@ -1,5 +1,5 @@
 #!/bin/bash
-mkdir -p assets
+mkdir -p src/data
 curl -L -o ../src/data/neurodegenerative-diseases.zip \
   https://www.kaggle.com/api/v1/datasets/download/toshall/neurodegenerative-diseases
 

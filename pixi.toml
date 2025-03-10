@@ -7,6 +7,7 @@ version = "0.1.0"
 description = "MRI-based Parkinson's disease classification"
 
 [tasks]
+start = "pixi run jupyter lab --no-browser"
 
 [dependencies]
 python = ">=3.9,<3.12"
