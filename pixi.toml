@@ -27,3 +27,5 @@ ipykernel = ">=6.29.5, <7"
 torch = { version = ">=2.6.0", index = "https://download.pytorch.org/whl/cpu" }
 torchvision = { version = ">=0.21.0", index = "https://download.pytorch.org/whl/cpu" }
 opencv-python = ">=4.11.0.86, <5"
+notebook = ">=7.3.2, <8"
+nbconvert = "*"
