@@ -21,12 +21,12 @@ def create_dir(directory):
         os.makedirs(directory)
 
 
-base_dir = "./data/input/parkinsons_dataset"
+base_dir = "./src/data/input/parkinsons_dataset"
 normal_dir = os.path.join(base_dir, "normal")
-parkinsons_dir = os.path.join(base_dir, "parkinsons")
+parkinsons_dir = os.path.join(base_dir, "parkinson")
 
 # Create train, validation and test directories
-output_base_dir = "./data/working/processed_data"
+output_base_dir = "./src/data/working/processed_data"
 train_dir = os.path.join(output_base_dir, "train")
 val_dir = os.path.join(output_base_dir, "val")
 test_dir = os.path.join(output_base_dir, "test")
@@ -112,9 +112,9 @@ for category, source_dir in [("Normal", normal_dir), ("Parkinson", parkinsons_di
 print("Data preprocessing and splitting completed.")
 
 # Paths to the processed data directories
-train_dir = "./data/working/processed_data/train"
-val_dir = "./data/working/processed_data/val"
-test_dir = "./data/working/processed_data/test"
+train_dir = "./src/data/working/processed_data/train"
+val_dir = "./src/data/working/processed_data/val"
+test_dir = "./src/data/working/processed_data/test"
 
 # Choose device: GPU if available, else CPU.
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -229,8 +229,14 @@ optimizer = optim.AdamW(
     [
         {"params": model.fusion.parameters()},
         {"params": model.fc.parameters()},
-        {"params": [p for p in model.efficientnet.parameters() if p.requires_grad], "lr": learning_rate / 10},
-        {"params": [p for p in model.vit.parameters() if p.requires_grad], "lr": learning_rate / 10},
+        {
+            "params": [p for p in model.efficientnet.parameters() if p.requires_grad],
+            "lr": learning_rate / 10,
+        },
+        {
+            "params": [p for p in model.vit.parameters() if p.requires_grad],
+            "lr": learning_rate / 10,
+        },
     ],
     lr=learning_rate,
     weight_decay=1e-5,
@@ -292,15 +298,15 @@ print("Training finished!")
 
 # Save the trained model.
 # Create directory if it doesn't exist
-os.makedirs("./data/models", exist_ok=True)
+os.makedirs("./src/data/models", exist_ok=True)
 
 # Save full model (architecture + weights)
-torch.save(model, "./data/models/ensemble_model_full.pt")
+torch.save(model, "./src/data/models/ensemble_model_full.pt")
 
 # Save state dict separately (current approach)
-torch.save(model.state_dict(), "./data/models/ensemble_model.pth")
+torch.save(model.state_dict(), "./src/data/models/ensemble_model.pth")
 
 # Also save the feature extractor for inference
-vit_feature_extractor.save_pretrained("./data/models/vit_feature_extractor")
+vit_feature_extractor.save_pretrained("./src/data/models/vit_feature_extractor")
 
-print("Model saved to ./data/models")
+print("Model saved to ./src/data/models")

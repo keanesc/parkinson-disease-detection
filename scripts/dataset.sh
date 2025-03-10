@@ -1,7 +1,7 @@
 #!/bin/bash
 mkdir -p src/data
-curl -L -o ../src/data/neurodegenerative-diseases.zip \
-  https://www.kaggle.com/api/v1/datasets/download/toshall/neurodegenerative-diseases
+curl -L -o ./src/data/parkinsons-brain-mri-dataset.zip \
+  https://www.kaggle.com/api/v1/datasets/download/irfansheriff/parkinsons-brain-mri-dataset
 
-unzip -o ../src/data/neurodegenerative-diseases.zip -d ../src/data/neurodegenerative-diseases/
-rm assets/neurodegenerative-diseases.zip
+unzip -o ./src/data/parkinsons-brain-mri-dataset.zip -d ./src/data/parkinsons-dataset
+rm ./src/data/parkinsons-brain-mri-dataset.zip
