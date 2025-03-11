@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-predictor = ParkinsonsPredictor(model_path="./src/models/ensemble_model_full.pt", feature_extractor_path="./src/models/vit_feature_extractor")
+predictor = ParkinsonsPredictor(model_path="./src/models/ensemble_model.pth", feature_extractor_path="./src/models/vit_feature_extractor")
 
 
 @app.post("/predict")
