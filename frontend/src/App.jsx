@@ -52,26 +52,39 @@ function App() {
       </p>
       
       <div className="upload-section">
-        <label className="file-input-label">
-          <input 
-            type="file" 
-            accept="image/*" 
-            onChange={handleFileSelect} 
-            className="file-input" 
-          />
-          Choose Image
-        </label>
+        {!preview && (
+          <label className="file-input-label">
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleFileSelect} 
+              className="file-input" 
+            />
+            Choose Image
+          </label>
+        )}
         
         {preview && (
           <div className="preview-container">
             <img src={preview} alt="Preview" className="image-preview" />
-            <button 
-              onClick={handleSubmit} 
-              className="analyze-button"
-              disabled={loading}
-            >
-              {loading ? "Analyzing..." : "Analyze Image"}
-            </button>
+            <div className="buttons-container">
+              <label className="file-input-label">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleFileSelect} 
+                  className="file-input" 
+                />
+                Choose New Image
+              </label>
+              <button 
+                onClick={handleSubmit} 
+                className="analyze-button"
+                disabled={loading}
+              >
+                {loading ? "Analyzing..." : "Analyze Image"}
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -89,6 +102,7 @@ function App() {
                 <div 
                   className="confidence-fill" 
                   style={{ width: `${confidencePercent}%` }}
+                  data-percent={`${confidencePercent}%`}
                 ></div>
               </div>
             </div>
