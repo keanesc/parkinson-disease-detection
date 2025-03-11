@@ -58,7 +58,7 @@ class ParkinsonsPredictor:
 
 # Example usage
 if __name__ == "__main__":
-    predictor = ParkinsonsPredictor(model_path="./src/models/ensemble_model_full.pt", feature_extractor_path="./src/models/vit_feature_extractor")
+    predictor = ParkinsonsPredictor(model_path="./backend/models/ensemble_model_full.pt", feature_extractor_path="./backend/models/vit_feature_extractor")
 
     result = predictor.predict("path/to/your/image.jpg")
     print(f"Prediction: {result['prediction']}")

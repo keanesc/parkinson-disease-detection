@@ -19,7 +19,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-predictor = ParkinsonsPredictor(model_path="./src/models/ensemble_model.pth", feature_extractor_path="./src/models/vit_feature_extractor")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "ensemble_model.pth")
+EXTRACTOR_PATH = os.path.join(BASE_DIR, "models", "vit_feature_extractor")
+
+predictor = ParkinsonsPredictor(model_path=MODEL_PATH, feature_extractor_path=EXTRACTOR_PATH)
 
 
 @app.post("/predict")

@@ -33,12 +33,24 @@ def create_dir(directory):
         os.makedirs(directory)
 
 
-base_dir = "./src/data/input/parkinsons_dataset"
+# Get absolute path to project root (assuming the script is in src/)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
+
+# Use absolute paths based on project root
+DATA_DIR = os.getenv("DATA_DIR", os.path.join(PROJECT_ROOT, "backend", "data", "input", "parkinsons_dataset"))
+PROCESSED_DIR = os.getenv("PROCESSED_DIR", os.path.join(PROJECT_ROOT, "backend", "data", "working", "processed_data"))
+
+# Now these will work regardless of where you run the script from
+train_dir = os.path.join(PROCESSED_DIR, "train")
+val_dir = os.path.join(PROCESSED_DIR, "val")
+
+base_dir = DATA_DIR
 normal_dir = os.path.join(base_dir, "normal")
 parkinsons_dir = os.path.join(base_dir, "parkinson")
 
 # Create train, validation and test directories
-output_base_dir = "./src/data/working/processed_data"
+output_base_dir = PROCESSED_DIR
 train_dir = os.path.join(output_base_dir, "train")
 val_dir = os.path.join(output_base_dir, "val")
 test_dir = os.path.join(output_base_dir, "test")
@@ -158,9 +170,9 @@ if __name__ == "__main__":
     print("Data preprocessing and splitting completed.")
 
     # Paths to the processed data directories
-    train_dir = "./src/data/working/processed_data/train"
-    val_dir = "./src/data/working/processed_data/val"
-    test_dir = "./src/data/working/processed_data/test"
+    train_dir = os.path.join(PROCESSED_DIR, "train")
+    val_dir = os.path.join(PROCESSED_DIR, "val")
+    test_dir = os.path.join(PROCESSED_DIR, "test")
 
     # Choose device: GPU if available, else CPU.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -311,15 +323,15 @@ if __name__ == "__main__":
 
     # Save the trained model.
     # Create directory if it doesn't exist
-    os.makedirs("./src/data/models", exist_ok=True)
+    os.makedirs("./backend/data/models", exist_ok=True)
 
     # Save full model (architecture + weights)
-    torch.save(model, "./src/models/ensemble_model_full.pt")
+    torch.save(model, "./backend/models/ensemble_model_full.pt")
 
     # Save state dict separately (current approach)
-    torch.save(model.state_dict(), "./src/models/ensemble_model.pth")
+    torch.save(model.state_dict(), "./backend/models/ensemble_model.pth")
 
     # Also save the feature extractor for inference
-    vit_feature_extractor.save_pretrained("./src/models/vit_feature_extractor")
+    vit_feature_extractor.save_pretrained("./backend/models/vit_feature_extractor")
 
-    print("Model saved to ./src/models")
+    print("Model saved to ./backend/models")
