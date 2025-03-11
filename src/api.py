@@ -4,11 +4,22 @@ import tempfile
 
 import uvicorn
 from fastapi import FastAPI, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 
 from inference import ParkinsonsPredictor
 
 app = FastAPI(title="Parkinson's Disease Detection API")
-predictor = ParkinsonsPredictor(model_path="./data/models/ensemble_model_full.pt", feature_extractor_path="./data/models/vit_feature_extractor")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Vite default port
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+predictor = ParkinsonsPredictor(model_path="./src/models/ensemble_model_full.pt", feature_extractor_path="./src/models/vit_feature_extractor")
 
 
 @app.post("/predict")

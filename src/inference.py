@@ -4,11 +4,13 @@ import torch
 from torchvision import transforms
 from transformers import ViTFeatureExtractor
 
+from train_model import EnsembleModel  # noqa: F401
+
 
 class ParkinsonsPredictor:
     def __init__(self, model_path, feature_extractor_path):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = torch.load(model_path, map_location=self.device)
+        self.model = torch.load(model_path, map_location=self.device, weights_only=False)
         self.model.eval()
         self.feature_extractor = ViTFeatureExtractor.from_pretrained(feature_extractor_path)
 
@@ -49,7 +51,7 @@ class ParkinsonsPredictor:
 
 # Example usage
 if __name__ == "__main__":
-    predictor = ParkinsonsPredictor(model_path="./data/models/ensemble_model_full.pt", feature_extractor_path="./data/models/vit_feature_extractor")
+    predictor = ParkinsonsPredictor(model_path="./src/models/ensemble_model_full.pt", feature_extractor_path="./src/data/models/vit_feature_extractor")
 
     result = predictor.predict("path/to/your/image.jpg")
     print(f"Prediction: {result['prediction']}")

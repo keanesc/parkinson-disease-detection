@@ -15,6 +15,18 @@ from torchvision import models
 from torchvision.datasets import ImageFolder
 from transformers import ViTFeatureExtractor, ViTModel
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Load and partially freeze EfficientNet
+efficientnet = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT).features.to(device)
+for param in efficientnet.parameters():
+    param.requires_grad = False
+
+# Load and partially freeze ViT
+vit_model = ViTModel.from_pretrained("google/vit-base-patch16-224").to(device)
+for param in vit_model.parameters():
+    param.requires_grad = False
+
 
 def create_dir(directory):
     if not os.path.exists(directory):
@@ -94,102 +106,6 @@ def visualize_images(category, source_dir, num_images=5):
     plt.show()
 
 
-# Process each category
-for category, source_dir in [("Normal", normal_dir), ("Parkinson", parkinsons_dir)]:
-    train_dest = os.path.join(train_dir, category)
-    val_dest = os.path.join(val_dir, category)
-    test_dest = os.path.join(test_dir, category)
-
-    split_data(source_dir, train_dest, val_dest, test_dest)
-    preprocess_images(train_dest, train_dest)
-    preprocess_images(val_dest, val_dest)
-    preprocess_images(test_dest, test_dest)
-
-    # Visualize sample images
-    print(f"Visualizing images from {category}")
-    visualize_images(category, train_dest)
-
-print("Data preprocessing and splitting completed.")
-
-# Paths to the processed data directories
-train_dir = "./src/data/working/processed_data/train"
-val_dir = "./src/data/working/processed_data/val"
-test_dir = "./src/data/working/processed_data/test"
-
-# Choose device: GPU if available, else CPU.
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Set basic parameters.
-num_classes = 2
-batch_size = 32  # Keep it consistent
-epochs = 30
-learning_rate = 1e-4
-
-# Define transformations for PyTorch
-transform_train = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomRotation(20),  # example "stronger" rotation
-        transforms.ColorJitter(
-            brightness=0.2,
-            contrast=0.2,
-            saturation=0.2,
-        ),
-        transforms.RandomAffine(
-            degrees=0,
-            translate=(0.2, 0.2),
-            scale=(0.8, 1.2),
-            shear=0.2,
-        ),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ]
-)
-
-transform_val = transforms.Compose(
-    [
-        transforms.Resize((224, 224)),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ]
-)
-
-# Create datasets and loaders once
-train_dataset = ImageFolder(train_dir, transform=transform_train)
-val_dataset = ImageFolder(val_dir, transform=transform_val)
-
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-
-print(f"Training with {len(train_dataset)} images in {len(train_dataset.classes)} classes")
-print(f"Class mapping: {train_dataset.class_to_idx}")
-
-# Load the pre-trained EfficientNet and freeze its weights.
-efficientnet = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT).features.to(device)
-for param in efficientnet.parameters():
-    param.requires_grad = False
-
-# Load the pre-trained ViT model and its feature extractor, and freeze its weights.
-vit_model = ViTModel.from_pretrained("google/vit-base-patch16-224").to(device)
-vit_feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224")
-for param in vit_model.parameters():
-    param.requires_grad = False
-
-# Selectively unfreeze later layers of the models for fine-tuning
-# For EfficientNet
-for i, layer in enumerate(efficientnet):
-    if i > 6:  # Unfreeze the last few layers
-        for param in layer.parameters():
-            param.requires_grad = True
-
-# For ViT - unfreeze the last transformer blocks
-for i, layer in enumerate(vit_model.encoder.layer):
-    if i >= 9:  # Unfreeze the last 3 transformer blocks
-        for param in layer.parameters():
-            param.requires_grad = True
-
-
 # Define an ensemble model.
 class EnsembleModel(nn.Module):
     def __init__(self, num_classes):
@@ -222,56 +138,131 @@ class EnsembleModel(nn.Module):
         return output
 
 
-# Set up the model, loss function, and optimizer.
-model = EnsembleModel(num_classes).to(device)
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.AdamW(
-    [
-        {"params": model.fusion.parameters()},
-        {"params": model.fc.parameters()},
-        {
-            "params": [p for p in model.efficientnet.parameters() if p.requires_grad],
-            "lr": learning_rate / 10,
-        },
-        {
-            "params": [p for p in model.vit.parameters() if p.requires_grad],
-            "lr": learning_rate / 10,
-        },
-    ],
-    lr=learning_rate,
-    weight_decay=1e-5,
-)
+# Process each category
+if __name__ == "__main__":
+    # Everything below runs only when you execute train_model.py directly
+    for category, source_dir in [("Normal", normal_dir), ("Parkinson", parkinsons_dir)]:
+        train_dest = os.path.join(train_dir, category)
+        val_dest = os.path.join(val_dir, category)
+        test_dest = os.path.join(test_dir, category)
 
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=3, factor=0.5)
+        split_data(source_dir, train_dest, val_dest, test_dest)
+        preprocess_images(train_dest, train_dest)
+        preprocess_images(val_dest, val_dest)
+        preprocess_images(test_dest, test_dest)
 
-# Training loop.
-for epoch in range(epochs):
-    model.train()
-    running_loss = 0.0
-    for images, labels in train_loader:
-        # Preprocess for ViT before forward pass
-        pil_images = []
-        for img_tensor in images:
-            pil_images.append(transforms.ToPILImage()(img_tensor.cpu()))
-        vit_inputs = vit_feature_extractor(images=pil_images, return_tensors="pt")
-        vit_inputs = {k: v.to(device) for k, v in vit_inputs.items()}
+        # Visualize sample images
+        print(f"Visualizing images from {category}")
+        visualize_images(category, train_dest)
 
-        images, labels = images.to(device), labels.to(device)
-        optimizer.zero_grad()
-        outputs = model(images, vit_inputs)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
-    avg_train_loss = running_loss / len(train_loader)
+    print("Data preprocessing and splitting completed.")
 
-    # Validation phase.
-    model.eval()
-    val_loss = 0.0
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for images, labels in val_loader:
+    # Paths to the processed data directories
+    train_dir = "./src/data/working/processed_data/train"
+    val_dir = "./src/data/working/processed_data/val"
+    test_dir = "./src/data/working/processed_data/test"
+
+    # Choose device: GPU if available, else CPU.
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Set basic parameters.
+    num_classes = 2
+    batch_size = 32  # Keep it consistent
+    epochs = 10
+    learning_rate = 1e-4
+
+    # Define transformations for PyTorch
+    transform_train = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(20),  # example "stronger" rotation
+            transforms.ColorJitter(
+                brightness=0.2,
+                contrast=0.2,
+                saturation=0.2,
+            ),
+            transforms.RandomAffine(
+                degrees=0,
+                translate=(0.2, 0.2),
+                scale=(0.8, 1.2),
+                shear=0.2,
+            ),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+    transform_val = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+    # Create datasets and loaders once
+    train_dataset = ImageFolder(train_dir, transform=transform_train)
+    val_dataset = ImageFolder(val_dir, transform=transform_val)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    print(f"Training with {len(train_dataset)} images in {len(train_dataset.classes)} classes")
+    print(f"Class mapping: {train_dataset.class_to_idx}")
+
+    # Load the pre-trained EfficientNet and freeze its weights.
+    efficientnet = models.efficientnet_b0(weights=models.EfficientNet_B0_Weights.DEFAULT).features.to(device)
+    for param in efficientnet.parameters():
+        param.requires_grad = False
+
+    # Load the pre-trained ViT model and its feature extractor, and freeze its weights.
+    vit_model = ViTModel.from_pretrained("google/vit-base-patch16-224").to(device)
+    vit_feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224")
+    for param in vit_model.parameters():
+        param.requires_grad = False
+
+    # Selectively unfreeze later layers of the models for fine-tuning
+    # For EfficientNet
+    for i, layer in enumerate(efficientnet):
+        if i > 6:  # Unfreeze the last few layers
+            for param in layer.parameters():
+                param.requires_grad = True
+
+    # For ViT - unfreeze the last transformer blocks
+    for i, layer in enumerate(vit_model.encoder.layer):
+        if i >= 9:  # Unfreeze the last 3 transformer blocks
+            for param in layer.parameters():
+                param.requires_grad = True
+
+    # Set up the model, loss function, and optimizer.
+    model = EnsembleModel(num_classes).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.AdamW(
+        [
+            {"params": model.fusion.parameters()},
+            {"params": model.fc.parameters()},
+            {
+                "params": [p for p in model.efficientnet.parameters() if p.requires_grad],
+                "lr": learning_rate / 10,
+            },
+            {
+                "params": [p for p in model.vit.parameters() if p.requires_grad],
+                "lr": learning_rate / 10,
+            },
+        ],
+        lr=learning_rate,
+        weight_decay=1e-5,
+    )
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=3, factor=0.5)
+
+    # Training loop.
+    for epoch in range(epochs):
+        model.train()
+        running_loss = 0.0
+        for images, labels in train_loader:
+            # Preprocess for ViT before forward pass
             pil_images = []
             for img_tensor in images:
                 pil_images.append(transforms.ToPILImage()(img_tensor.cpu()))
@@ -279,34 +270,56 @@ for epoch in range(epochs):
             vit_inputs = {k: v.to(device) for k, v in vit_inputs.items()}
 
             images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
             outputs = model(images, vit_inputs)
             loss = criterion(outputs, labels)
-            val_loss += loss.item()
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-    avg_val_loss = val_loss / len(val_loader)
-    val_acc = correct / total * 100.0
-    print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, Val Acc: {val_acc:.2f}%")
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        avg_train_loss = running_loss / len(train_loader)
 
-    # Step the scheduler to adjust LR based on validation loss
-    scheduler.step(avg_val_loss)
+        # Validation phase.
+        model.eval()
+        val_loss = 0.0
+        correct = 0
+        total = 0
+        with torch.no_grad():
+            for images, labels in val_loader:
+                pil_images = []
+                for img_tensor in images:
+                    pil_images.append(transforms.ToPILImage()(img_tensor.cpu()))
+                vit_inputs = vit_feature_extractor(images=pil_images, return_tensors="pt")
+                vit_inputs = {k: v.to(device) for k, v in vit_inputs.items()}
 
-    torch.cuda.empty_cache()
+                images, labels = images.to(device), labels.to(device)
+                outputs = model(images, vit_inputs)
+                loss = criterion(outputs, labels)
+                val_loss += loss.item()
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
+        avg_val_loss = val_loss / len(val_loader)
+        val_acc = correct / total * 100.0
+        print(f"Epoch {epoch + 1}/{epochs}, Train Loss: {avg_train_loss:.4f}, Val Loss: {avg_val_loss:.4f}, Val Acc: {val_acc:.2f}%")
 
-print("Training finished!")
+        # Step the scheduler to adjust LR based on validation loss
+        scheduler.step(avg_val_loss)
 
-# Save the trained model.
-# Create directory if it doesn't exist
-os.makedirs("./src/data/models", exist_ok=True)
+        torch.cuda.empty_cache()
 
-# Save full model (architecture + weights)
-torch.save(model, "./src/data/models/ensemble_model_full.pt")
+    print("Training finished!")
 
-# Save state dict separately (current approach)
-torch.save(model.state_dict(), "./src/data/models/ensemble_model.pth")
+    # Save the trained model.
+    # Create directory if it doesn't exist
+    os.makedirs("./src/data/models", exist_ok=True)
 
-# Also save the feature extractor for inference
-vit_feature_extractor.save_pretrained("./src/data/models/vit_feature_extractor")
+    # Save full model (architecture + weights)
+    torch.save(model, "./src/models/ensemble_model_full.pt")
 
-print("Model saved to ./src/data/models")
+    # Save state dict separately (current approach)
+    torch.save(model.state_dict(), "./src/models/ensemble_model.pth")
+
+    # Also save the feature extractor for inference
+    vit_feature_extractor.save_pretrained("./src/models/vit_feature_extractor")
+
+    print("Model saved to ./src/models")
