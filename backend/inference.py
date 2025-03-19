@@ -2,9 +2,8 @@
 import cv2
 import torch
 from torchvision import transforms
-from transformers import ViTFeatureExtractor
-
 from train_model import EnsembleModel  # noqa: F401
+from transformers import ViTFeatureExtractor
 
 
 class ParkinsonsPredictor:
@@ -19,14 +18,18 @@ class ParkinsonsPredictor:
         self.model.load_state_dict(state_dict)
         self.model.eval()
 
-        self.feature_extractor = ViTFeatureExtractor.from_pretrained(feature_extractor_path)
+        self.feature_extractor = ViTFeatureExtractor.from_pretrained(
+            feature_extractor_path
+        )
 
         self.transform = transforms.Compose(
             [
                 transforms.ToPILImage(),
                 transforms.Resize((224, 224)),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
             ]
         )
 
@@ -53,12 +56,25 @@ class ParkinsonsPredictor:
         pred_label = self.class_mapping[pred_class]
         confidence = torch.softmax(outputs, dim=1)[0][pred_class].item()
 
-        return {"prediction": pred_label, "class_id": pred_class, "confidence": confidence}
+        return {
+            "prediction": pred_label,
+            "class_id": pred_class,
+            "confidence": confidence,
+        }
 
 
 # Example usage
 if __name__ == "__main__":
-    predictor = ParkinsonsPredictor(model_path="./backend/models/ensemble_model_full.pt", feature_extractor_path="./backend/models/vit_feature_extractor")
+    import os
+
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    MODEL_PATH = os.path.join(BASE_DIR, "models", "ensemble_model.pth")
+    EXTRACTOR_PATH = os.path.join(BASE_DIR, "models", "vit_feature_extractor")
+
+    predictor = ParkinsonsPredictor(
+        model_path=MODEL_PATH,
+        feature_extractor_path=EXTRACTOR_PATH,
+    )
 
     result = predictor.predict("path/to/your/image.jpg")
     print(f"Prediction: {result['prediction']}")

@@ -14,14 +14,18 @@ __pycache__/
 # Ignore dataset files (optional: you can download them separately)
 backend/data/*
 backend/models/*
+results/report/*
+results/archived/*
 
 # But keep this .gitkeep file (useful for keeping empty folders in Git)
 !backend/data/.gitkeep
 !backend/models/.gitkeep
+!results/report/.gitkeep
 
 # Ignore model weights and logs (optional)
 *.h5
 *.pth
+*.pt
 *.zip
 *.npz
 *.ckpt

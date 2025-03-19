@@ -5,7 +5,6 @@ import tempfile
 import uvicorn
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-
 from inference import ParkinsonsPredictor
 
 app = FastAPI(title="Parkinson's Disease Detection API")
@@ -23,7 +22,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models", "ensemble_model.pth")
 EXTRACTOR_PATH = os.path.join(BASE_DIR, "models", "vit_feature_extractor")
 
-predictor = ParkinsonsPredictor(model_path=MODEL_PATH, feature_extractor_path=EXTRACTOR_PATH)
+predictor = ParkinsonsPredictor(
+    model_path=MODEL_PATH, feature_extractor_path=EXTRACTOR_PATH
+)
 
 
 @app.post("/predict")
